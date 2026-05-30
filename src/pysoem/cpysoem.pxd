@@ -151,19 +151,22 @@ cdef extern from "ethercat.h":
         uint32           eep_man
         uint32           eep_id
         uint32           eep_rev
+        uint32           eep_ser
         uint16           Itype
         uint16           Dtype
         uint16           Obits
         uint32           Obytes
         uint8            *outputs
+        uint32           Ooffset
         uint8            Ostartbit
         uint16           Ibits
         uint32           Ibytes
         uint8            *inputs
+        uint32           Ioffset
         uint8            Istartbit
-        ec_smt           *SM #[EC_MAXSM]
-        uint8            *SMtype #[EC_MAXSM]
-        ec_fmmut         *FMMU #[EC_MAXFMMU]
+        ec_smt           SM[EC_MAXSM]
+        uint8            SMtype[EC_MAXSM]
+        ec_fmmut         FMMU[EC_MAXFMMU]
         uint8            FMMU0func
         uint8            FMMU1func
         uint8            FMMU2func
@@ -192,7 +195,6 @@ cdef extern from "ethercat.h":
         int32            DCcycle
         int32            DCshift
         uint8            DCactive
-        uint16           configindex
         uint16           SIIindex
         uint8            eep_8byte
         uint8            eep_pdi
@@ -205,10 +207,9 @@ cdef extern from "ethercat.h":
         uint8            group
         uint8            FMMUunused
         boolean          islost
-        int              (*PO2SOconfig)(uint16 slave, void* user)
-        int              (*PO2SOconfigx)(ecx_contextt* context, uint16 slave)
+        int              (*PO2SOconfig)(ecx_contextt* context, uint16 slave)
+        char             name[EC_MAXNAME + 1]
         void*            user
-        char             *name #[EC_MAXNAME + 1]
     
     ctypedef struct ec_groupt:
         uint32           logstartaddr
@@ -274,26 +275,22 @@ cdef extern from "ethercat.h":
         uint8   FMMU3
     
     ctypedef struct ecx_contextt:
-        ecx_portt     *port
-        ec_slavet      *slavelist
-        int            *slavecount
-        int            maxslave
-        ec_groupt      *grouplist
-        int            maxgroup
-        uint8          *esibuf
-        uint32         *esimap
+        ecx_portt     port
+        ec_slavet      slavelist[EC_MAXSLAVE]
+        int            slavecount
+        ec_groupt      grouplist[EC_MAXGROUP]
+        boolean        ecaterror
+        int64          DCtime
+        uint8          esibuf[EC_MAXEEPBUF]
+        uint32         esimap[EC_MAXEEPBITMAP]
         uint16         esislave
-        ec_eringt      *elist
-        ec_idxstackT   *idxstack
-        boolean        *ecaterror
-        int64          *DCtime
-        ec_SMcommtypet *SMcommtype
-        ec_PDOassignt  *PDOassign
-        ec_PDOdesct    *PDOdesc
-        ec_eepromSMt   *eepSM
-        ec_eepromFMMUt *eepFMMU
-        int            (*FOEhook)(uint16 slave, int packetnumber, int datasize)
-        int            (*EOEhook)(ecx_contextt* context, uint16 slave, void* eoembx)
+        ec_eringt      elist
+        ec_idxstackT   idxstack
+        ec_SMcommtypet SMcommtype[EC_MAX_MAPT]
+        ec_PDOassignt  PDOassign[EC_MAX_MAPT]
+        ec_PDOdesct    PDOdesc[EC_MAX_MAPT]
+        ec_eepromSMt   eepSM
+        ec_eepromFMMUt eepFMMU
         int            manualstatechange
         
     ctypedef struct ec_ODlistt:

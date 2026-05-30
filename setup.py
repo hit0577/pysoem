@@ -40,21 +40,23 @@ soem_macros.append(('USE_SOEM_CONFIG_H', ''))
 soem_sources.extend([os.path.join('.', 'soem', 'osal', os_name, 'osal.c'),
                      os.path.join('.', 'soem', 'oshw', os_name, 'oshw.c'),
                      os.path.join('.', 'soem', 'oshw', os_name, 'nicdrv.c'),
-                     os.path.join('.', 'soem', 'soem', 'ethercatbase.c'),
-                     os.path.join('.', 'soem', 'soem', 'ethercatcoe.c'),
-                     os.path.join('.', 'soem', 'soem', 'ethercatconfig.c'),
-                     os.path.join('.', 'soem', 'soem', 'ethercatdc.c'),
-                     os.path.join('.', 'soem', 'soem', 'ethercatfoe.c'),
-                     os.path.join('.', 'soem', 'soem', 'ethercatmain.c'),
-                     os.path.join('.', 'soem', 'soem', 'ethercatprint.c'),
-                     os.path.join('.', 'soem', 'soem', 'ethercatsoe.c'),
+                     os.path.join('.', 'soem', 'src', 'ec_base.c'),
+                     os.path.join('.', 'soem', 'src', 'ec_coe.c'),
+                     os.path.join('.', 'soem', 'src', 'ec_config.c'),
+                     os.path.join('.', 'soem', 'src', 'ec_dc.c'),
+                     os.path.join('.', 'soem', 'src', 'ec_eoe.c'),
+                     os.path.join('.', 'soem', 'src', 'ec_foe.c'),
+                     os.path.join('.', 'soem', 'src', 'ec_main.c'),
+                     os.path.join('.', 'soem', 'src', 'ec_print.c'),
+                     os.path.join('.', 'soem', 'src', 'ec_soe.c'),
                      os.path.join('.', 'src', 'soem', 'soem_config.c')])
 
 soem_inc_dirs.extend([os.path.join('.', 'soem', 'oshw', os_name),
                       os.path.join('.', 'soem', 'osal', os_name),
                       os.path.join('.', 'soem', 'oshw'),
                       os.path.join('.', 'soem', 'osal'),
-                      os.path.join('.', 'soem', 'soem'),
+                      os.path.join('.', 'soem', 'include'),
+                      os.path.join('.', 'soem', 'include', 'soem'),
                       os.path.join('.', 'src', 'soem')])
 
 
