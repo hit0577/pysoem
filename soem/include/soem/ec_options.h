@@ -46,8 +46,8 @@ extern "C" {
 #define EC_DEFAULTRETRIES 3
 
 /* MAC addresses */
-#define EC_PRIMARY_MAC_ARRAY {0x01, 0x01, 0x05, 0x10, 0x00, 0x00}
-#define EC_SECONDARY_MAC_ARRAY {0x01, 0x01, 0x05, 0x10, 0x00, 0x01}
+#define EC_PRIMARY_MAC_ARRAY {0x0101, 0x0510, 0x0000}
+#define EC_SECONDARY_MAC_ARRAY {0x0101, 0x0510, 0x0001}
 
 /* Allow pysoem to override timeouts at runtime */
 #ifdef USE_SOEM_CONFIG_H
