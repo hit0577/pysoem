@@ -7,6 +7,39 @@
 #include <stdlib.h>
 #include <string.h>
 
+#ifdef __APPLE__
+/* macOS lacks clock_nanosleep and TIMER_ABSTIME — use nanosleep fallback */
+#include <mach/mach_time.h>
+static mach_timebase_info_data_t _osal_mach_timebase;
+
+static void _osal_mach_time_init(void)
+{
+   if (_osal_mach_timebase.denom == 0)
+      mach_timebase_info(&_osal_mach_timebase);
+}
+
+static void _osal_abs_to_rel(struct timespec *ts)
+{
+   uint64_t now, target, delta;
+   _osal_mach_time_init();
+   now = mach_absolute_time();
+   target = (uint64_t)ts->tv_sec * NSEC_PER_SEC + ts->tv_nsec;
+   target = target * _osal_mach_timebase.denom / _osal_mach_timebase.numer;
+   if (target > now)
+   {
+      delta = target - now;
+      delta = delta * _osal_mach_timebase.numer / _osal_mach_timebase.denom;
+      ts->tv_sec  = delta / NSEC_PER_SEC;
+      ts->tv_nsec = delta % NSEC_PER_SEC;
+   }
+   else
+   {
+      ts->tv_sec  = 0;
+      ts->tv_nsec = 0;
+   }
+}
+#endif
+
 /* Returns time from some unspecified moment in past,
  * strictly increasing, used for time intervals measurement. */
 void osal_get_monotonic_time(ec_timet *ts)
@@ -58,14 +91,23 @@ int osal_usleep(uint32 usec)
    int result;
 
    osal_timespec_from_usec(usec, &ts);
+#ifdef __APPLE__
+   result = nanosleep(&ts, NULL);
+#else
    result = clock_nanosleep(CLOCK_MONOTONIC, 0, &ts, NULL);
+#endif
    return result == 0 ? 0 : -1;
 }
 
 int osal_monotonic_sleep(ec_timet *ts)
 {
    int result;
+#ifdef __APPLE__
+   _osal_abs_to_rel(ts);
+   result = nanosleep(ts, NULL);
+#else
    result = clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, ts, NULL);
+#endif
    return result == 0 ? 0 : -1;
 }
 
