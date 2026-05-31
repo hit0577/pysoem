@@ -32,7 +32,7 @@ elif sys.platform.startswith('darwin'):
     soem_macros = []
     soem_lib_dirs = []
     soem_libs = ['pthread', 'pcap']
-    os_name = 'macosx'
+    os_name = 'linux'  # SOEM v2 unified Unix-like platforms under 'linux'
 
 soem_macros.append(('EC_VER2', ''))
 soem_macros.append(('USE_SOEM_CONFIG_H', ''))
