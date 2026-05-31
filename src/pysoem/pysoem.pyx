@@ -284,6 +284,7 @@ cdef class CdefMaster:
     def __cinit__(self):
         # SOEM v2: inline arrays in ecx_contextt, no pointer setup needed
         self._ecx_contextt.manualstatechange = 0
+        self._ecx_contextt.overlappedMode = 1  # match old pysoem overlap behavior
         
         self.slaves = None
         self.sdo_read_timeout = 700000
@@ -354,9 +355,9 @@ cdef class CdefMaster:
         
         Py_INCREF(self)
         with nogil:
-            ret_val = cpysoem.ecx_config_init(&self._ecx_contextt, usetable)
+            ret_val = cpysoem.ecx_config_init(&self._ecx_contextt)
         Py_DECREF(self)
-        
+
         return ret_val
 
     cpdef cpysoem.boolean check_release_gil(self, release_gil):
@@ -387,7 +388,7 @@ cdef class CdefMaster:
             if release_gil:
                 ret_val = self.__config_init_nogil(usetable)
             else:
-                ret_val = cpysoem.ecx_config_init(&self._ecx_contextt, usetable)
+                ret_val = cpysoem.ecx_config_init(&self._ecx_contextt)
 
             if ret_val > 0:
               for i in range(self._ecx_contextt.slavecount):
@@ -425,14 +426,14 @@ cdef class CdefMaster:
         cdef _CallbackData cd
         with self._operation_context():
             # ecx_config_map_group returns the actual IO map size (not an error value), expect the value to be less than EC_IOMAPSIZE
-            ret_val = cpysoem.ecx_config_overlap_map_group(&self._ecx_contextt, &self.io_map, 0)
+            ret_val = cpysoem.ecx_config_map_group(&self._ecx_contextt, &self.io_map, 0)
             # check for exceptions raised in the config functions
             for slave in self.slaves:
                 cd = slave._cd
                 if cd.exc_raised:
                     raise cd.exc_info[0],cd.exc_info[1],cd.exc_info[2]
             logger.debug('io map size: {}'.format(ret_val))
-            # raise an exception if one or more mailbox errors occured within ecx_config_overlap_map_group call
+            # raise an exception if one or more mailbox errors occured within ecx_config_map_group call
             error_list = self._collect_mailbox_errors()
             if len(error_list) > 0:
                 raise ConfigMapError(error_list)
@@ -564,7 +565,7 @@ cdef class CdefMaster:
         cdef int result
         Py_INCREF(self)
         with nogil:
-            result = cpysoem.ecx_send_overlap_processdata(&self._ecx_contextt)
+            result = cpysoem.ecx_send_processdata(&self._ecx_contextt)
         Py_DECREF(self)
 
         return result
@@ -578,7 +579,7 @@ cdef class CdefMaster:
         with self._operation_context():
             if release_gil:
                 return self.__send_overlap_processdata_nogil()
-            return cpysoem.ecx_send_overlap_processdata(&self._ecx_contextt)
+            return cpysoem.ecx_send_processdata(&self._ecx_contextt)
 
     cdef int __receive_processdata_nogil(self, int timeout):
         """Receive processdata from slaves without GIL.
@@ -1047,12 +1048,11 @@ cdef class CdefSlave:
         :rtype: int
         :raises Emergency: if an emergency message was received
         """
-        cdef cpysoem.ec_mbxbuft buf
+        cdef cpysoem.ec_mbxbuft *buf = NULL
         cdef int wkt
         cdef cpysoem.ec_errort err
-        
+
         with self._master._operation_context():
-            cpysoem.ec_clearmbx(&buf)
             wkt = cpysoem.ecx_mbxreceive(self._ecx_contextt, self._pos, &buf, 0)
 
             if cpysoem.ecx_poperror(self._ecx_contextt, &err):

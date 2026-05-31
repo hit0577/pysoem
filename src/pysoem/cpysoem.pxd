@@ -31,6 +31,7 @@ cdef extern from "ethercat.h":
         EC_MAXEEPBITMAP = 128
         EC_MAXEEPBUF = 4096
         EC_MAX_MAPT = 1
+        EC_MBXPOOLSIZE = 32
     
     ec_adaptert* ec_find_adapters()
         
@@ -281,7 +282,21 @@ cdef extern from "ethercat.h":
         uint8   FMMU1
         uint8   FMMU2
         uint8   FMMU3
-    
+
+    ctypedef struct osal_mutext:
+        pass
+
+    ctypedef struct ec_mbxpoolt:
+        int listhead
+        int listtail
+        int listcount
+        int mbxemptylist[EC_MBXPOOLSIZE]
+        osal_mutext *mbxmutex
+        ec_mbxbuft mbx[EC_MBXPOOLSIZE]
+
+    ctypedef struct ec_enit:
+        pass
+
     ctypedef struct ecx_contextt:
         ecx_portt     port
         ec_slavet      slavelist[EC_MAXSLAVE]
@@ -299,7 +314,14 @@ cdef extern from "ethercat.h":
         ec_PDOdesct    PDOdesc[EC_MAX_MAPT]
         ec_eepromSMt   eepSM
         ec_eepromFMMUt eepFMMU
+        ec_mbxpoolt    mbxpool
+        ec_enit        *ENI
+        int            (*FOEhook)(uint16 slave, int packetnumber, int datasize)
+        int            (*EOEhook)(ecx_contextt *context, uint16 slave, void *eoembx)
         int            manualstatechange
+        void           *userdata
+        boolean        overlappedMode
+        boolean        packedMode
         
     ctypedef struct ec_ODlistt:
         uint16  Slave
@@ -322,7 +344,6 @@ cdef extern from "ethercat.h":
     int ecx_init_redundant(ecx_contextt *context, ecx_redportt *redport, const char *ifname, char *if2name)
     void ecx_close(ecx_contextt *context)
     int ecx_config_map_group(ecx_contextt *context, void *pIOmap, uint8 group)
-    int ecx_config_overlap_map_group(ecx_contextt *context, void *pIOmap, uint8 group)
     int ecx_readODlist(ecx_contextt *context, uint16 Slave, ec_ODlistt *pODlist)
     int ecx_readODdescription(ecx_contextt *context, uint16 Item, ec_ODlistt *pODlist)
     int ecx_readOE(ecx_contextt *context, uint16 Item, ec_ODlistt *pODlist, ec_OElistt *pOElist)
@@ -334,7 +355,7 @@ cdef extern from "ethercat.h":
     int ecx_recover_slave(ecx_contextt *context, uint16 slave, int timeout)
     int ecx_reconfig_slave(ecx_contextt *context, uint16 slave, int timeout)
 
-    int ecx_mbxreceive(ecx_contextt *context, uint16 slave, ec_mbxbuft *mbx, int timeout)
+    int ecx_mbxreceive(ecx_contextt *context, uint16 slave, ec_mbxbuft **mbx, int timeout)
     void ec_clearmbx(ec_mbxbuft *Mbx)
     boolean ecx_poperror(ecx_contextt *context, ec_errort *Ec)
     const char* ec_sdoerror2string(uint32 sdoerrorcode)
@@ -353,9 +374,8 @@ cdef extern from "ethercat.h":
     int ecx_FPRD(ecx_portt *port, uint16 ADP, uint16 ADO, uint16 length, void *data, int timeout)
 
 cdef extern from "ethercat.h" nogil:
-    int ecx_config_init(ecx_contextt *context, uint8 usetable)
+    int ecx_config_init(ecx_contextt *context)
     int ecx_send_processdata(ecx_contextt *context)
-    int ecx_send_overlap_processdata(ecx_contextt *context)
     int ecx_receive_processdata(ecx_contextt *context, int timeout)
     int ecx_FOEwrite(ecx_contextt *context, uint16 slave, char *filename, uint32 password, int psize, void *p, int timeout)
     int ecx_FOEread(ecx_contextt *context, uint16 slave, char *filename, uint32 password, int *psize, void *p, int timeout)
