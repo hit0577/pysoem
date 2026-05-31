@@ -264,7 +264,6 @@ cdef class CdefMaster:
     cdef classes. For example you can add new attributes dynamically.
     """
 
-    cdef cpysoem.ecx_portt        _ecx_port
     cdef cpysoem.ecx_redportt     _ecx_redport
 
     cdef cpysoem.ecx_contextt _ecx_contextt
@@ -284,7 +283,6 @@ cdef class CdefMaster:
 
     def __cinit__(self):
         # SOEM v2: inline arrays in ecx_contextt, no pointer setup needed
-        self._ecx_contextt.port = self._ecx_port
         self._ecx_contextt.manualstatechange = 0
         
         self.slaves = None
@@ -1419,7 +1417,7 @@ cdef class CdefSlave:
         """Send and receive of the FPRD cmd primitive (Configured Address Physical Read)."""
         cdef unsigned char* data
         data = <unsigned char*>PyMem_Malloc(size)
-        cdef int wkc = cpysoem.ecx_FPRD(self._ecx_contextt.port, self._ec_slave.configadr, address, size, data, timeout_us)
+        cdef int wkc = cpysoem.ecx_FPRD(&self._ecx_contextt.port, self._ec_slave.configadr, address, size, data, timeout_us)
         if wkc != 1:
             PyMem_Free(data)
             raise WkcError()
@@ -1430,7 +1428,7 @@ cdef class CdefSlave:
 
     def _fpwr(self, int address, bytes data, timeout_us=2000):
         """Send and receive of the FPWR cmd primitive (Configured Address Physical Write)."""
-        cdef int wkc = cpysoem.ecx_FPWR(self._ecx_contextt.port, self._ec_slave.configadr, address, <int>len(data), <unsigned char*>data, timeout_us)
+        cdef int wkc = cpysoem.ecx_FPWR(&self._ecx_contextt.port, self._ec_slave.configadr, address, <int>len(data), <unsigned char*>data, timeout_us)
         if wkc != 1:
             raise WkcError()
 
